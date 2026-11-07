@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Tambahan wajib untuk memblokir input non-angka
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyRoutineScreen extends StatefulWidget {
@@ -9,10 +10,7 @@ class MyRoutineScreen extends StatefulWidget {
 }
 
 class _MyRoutineScreenState extends State<MyRoutineScreen> {
-  // Key ini wajib ada untuk syarat validasi form dari dosen
   final _formKey = GlobalKey<FormState>();
-  
-  // Controller untuk mengambil teks yang diketik pengguna
   final _nameController = TextEditingController();
   final _setsController = TextEditingController();
   final _repsController = TextEditingController();
@@ -20,38 +18,32 @@ class _MyRoutineScreenState extends State<MyRoutineScreen> {
   
   bool _isLoading = false;
 
-  // Fungsi untuk menyimpan data ke Supabase (Syarat CRUD - Create Data)
   Future<void> _saveRoutine() async {
-    // 1. Cek validasi form, jika ada yang kosong, batalkan proses
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _isLoading = true; // Munculkan efek loading
+      _isLoading = true;
     });
 
     try {
-      // 2. Mengirim data ke tabel 'split_logs' di Supabase
       await Supabase.instance.client.from('split_logs').insert({
         'exercise_name': _nameController.text,
         'sets': int.parse(_setsController.text),
         'reps': int.parse(_repsController.text),
         'weight': _weightController.text.isEmpty ? 0.0 : double.parse(_weightController.text),
-        'date': DateTime.now().toIso8601String(), // Mengambil tanggal hari ini otomatis
+        'date': DateTime.now().toIso8601String(),
       });
 
-      // 3. Memunculkan notifikasi sukses berwarna hijau
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Data berhasil disimpan ke Database! 🔥'), backgroundColor: Colors.green),
         );
-        // Mengosongkan kolom isian setelah berhasil disimpan
         _nameController.clear();
         _setsController.clear();
         _repsController.clear();
         _weightController.clear();
       }
     } catch (e) {
-      // 4. Memunculkan notifikasi error jika gagal
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal menyimpan: $e'), backgroundColor: Colors.red),
@@ -59,12 +51,11 @@ class _MyRoutineScreenState extends State<MyRoutineScreen> {
       }
     } finally {
       setState(() {
-        _isLoading = false; // Matikan efek loading
+        _isLoading = false;
       });
     }
   }
 
-  // Membersihkan memori saat halaman ditutup
   @override
   void dispose() {
     _nameController.dispose();
@@ -82,87 +73,121 @@ class _MyRoutineScreenState extends State<MyRoutineScreen> {
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      backgroundColor: Colors.grey[100], // Latar belakang abu-abu muda agar Card lebih menonjol
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              const Text(
-                'Catat Latihan Kalistenikmu',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              
-              // Input Nama Gerakan
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama Gerakan (Misal: Pull-up)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.fitness_center),
-                ),
-                validator: (value) => value == null || value.isEmpty ? 'Nama gerakan wajib diisi' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Input Set dan Repetisi (Dibuat bersebelahan)
-              Row(
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _setsController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Jumlah Set',
-                        border: OutlineInputBorder(),
+                  Row(
+                    children: [
+                      Icon(Icons.edit_document, color: Colors.blue[800], size: 28),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Catat Latihanmu',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                       ),
-                      validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Input Nama Gerakan
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Nama Gerakan (Misal: Pull-up)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.fitness_center),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Input Set dan Repetisi
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _setsController,
+                          keyboardType: TextInputType.number,
+                          // Murni hanya bisa diketik angka (blokir huruf/simbol)
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: InputDecoration(
+                            labelText: 'Set',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.layers),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          validator: (value) => value == null || value.isEmpty ? 'Isi set' : null,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _repsController,
+                          keyboardType: TextInputType.number,
+                          // Murni hanya bisa diketik angka
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: InputDecoration(
+                            labelText: 'Repetisi',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.repeat),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          validator: (value) => value == null || value.isEmpty ? 'Isi reps' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Input Beban Tambahan
+                  TextFormField(
+                    controller: _weightController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    // Hanya izinkan angka dan satu titik (untuk desimal)
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                    decoration: InputDecoration(
+                      labelText: 'Beban (Kg) - Opsional',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.scale),
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _repsController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Repetisi',
-                        border: OutlineInputBorder(),
+                  const SizedBox(height: 32),
+
+                  // Tombol Simpan
+                  SizedBox(
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 2,
                       ),
-                      validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
+                      onPressed: _isLoading ? null : _saveRoutine,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Simpan ke Database', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Input Beban Tambahan (Opsional)
-              TextFormField(
-                controller: _weightController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Beban Tambahan / Weight (Kg) - Opsional',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.scale),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Tombol Simpan
-              SizedBox(
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: _isLoading ? null : _saveRoutine,
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Simpan ke Database', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
