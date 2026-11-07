@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 import 'providers/exercise_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/my_routine_screen.dart';
 
-void main() {
+void main() async {
+  // Wajib ditambahkan agar aplikasi menunggu Supabase siap sebelum merender UI
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Menyambungkan aplikasi ke project Supabase milikmu
+  await Supabase.initialize(
+    url: 'https://gzjdiokuakwfygqdtssw.supabase.co',
+    anonKey: 'sb_publishable_y6mufNDCUZ1_UkVIA44b1A_m0334Kf1',
+  );
+
   runApp(
     MultiProvider(
       providers: [
