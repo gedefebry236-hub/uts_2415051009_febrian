@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/exercise_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/my_routine_screen.dart';
 
 void main() {
-  runApp(const CaliSplitApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ExerciseProvider()),
+      ],
+      child: const CaliSplitApp(),
+    ),
+  );
 }
 
 class CaliSplitApp extends StatelessWidget {
@@ -34,7 +43,7 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
   
-  // Daftar screen untuk masing-masing tab
+  // Daftar screen untuk masing-masing tab navigasi
   final List<Widget> _screens = const [
     HomeScreen(),
     ExploreScreen(),
