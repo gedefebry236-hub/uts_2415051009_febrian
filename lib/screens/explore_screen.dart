@@ -13,9 +13,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    // Memanggil fungsi fetch API saat halaman ini pertama kali dibuka
+    // Memanggil API saat halaman pertama kali dimuat
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ExerciseProvider>(context, listen: false).loadExercises();
+      Provider.of<ExerciseProvider>(context, listen: false).fetchExercises();
     });
   }
 
@@ -26,83 +26,109 @@ class _ExploreScreenState extends State<ExploreScreen> {
         title: const Text('Katalog Gerakan (API)'),
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      // Consumer untuk menangkap perubahan state dari Provider
+      backgroundColor: Colors.grey[100], // Background terang agar Card lebih menonjol
       body: Consumer<ExerciseProvider>(
         builder: (context, provider, child) {
-          // 1. Menangani Loading State (Syarat UTS)
+          // State 1: Loading
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
-          // 2. Menangani Error State (Syarat UTS)
-          if (provider.errorMessage.isNotEmpty) {
-            return Center(child: Text('Error: ${provider.errorMessage}'));
+
+          // State 2: Error
+          if (provider.error.isNotEmpty) {
+            return Center(
+              child: Text('Gagal memuat data: ${provider.error}', style: const TextStyle(color: Colors.red)),
+            );
           }
-          
-          // 3. Menangani Empty State (Syarat UTS)
+
+          // State 3: Data Kosong
           if (provider.exercises.isEmpty) {
             return const Center(child: Text('Tidak ada data gerakan.'));
           }
 
-          // 4. Responsive Layout menggunakan LayoutBuilder (Syarat UTS)
+          // State 4: Sukses (Responsive Layout)
           return LayoutBuilder(
             builder: (context, constraints) {
-              // Jika lebar layar lebih dari 600 pixel (Mode Tablet/Desktop) -> Pakai GridView
+              // Jika dibuka di Tablet/Web (layar lebar), gunakan GridView
               if (constraints.maxWidth > 600) {
                 return GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(16),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, // 3 kotak menyamping
-                    childAspectRatio: 3 / 2,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                    crossAxisCount: 2,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
                   ),
                   itemCount: provider.exercises.length,
                   itemBuilder: (context, index) {
-                    final exercise = provider.exercises[index];
-                    return Card(
-                      elevation: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            const SizedBox(height: 8),
-                            // API wger menyertakan tag HTML, kita potong untuk display sederhana
-                            Expanded(child: Text(exercise.description.replaceAll(RegExp(r'<[^>]*>'), ''), overflow: TextOverflow.fade)),
-                          ],
-                        ),
-                      ),
-                    );
+                    return _buildExerciseCard(provider.exercises[index]);
+                  },
+                );
+              } 
+              // Jika di HP, gunakan ListView
+              else {
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: provider.exercises.length,
+                  itemBuilder: (context, index) {
+                    return _buildExerciseCard(provider.exercises[index]);
                   },
                 );
               }
-              
-              // Jika lebar layar kecil (Mode HP) -> Pakai ListView
-              return ListView.builder(
-                itemCount: provider.exercises.length,
-                itemBuilder: (context, index) {
-                  final exercise = provider.exercises[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    elevation: 2,
-                    child: ListTile(
-                      title: Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      // Membersihkan tag HTML dari API wger
-                      subtitle: Text(exercise.description.replaceAll(RegExp(r'<[^>]*>'), ''), maxLines: 2, overflow: TextOverflow.ellipsis),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        // TODO: Navigasi ke Detail Screen (Kita buat di langkah selanjutnya)
-                      },
-                    ),
-                  );
-                },
-              );
             },
           );
         },
+      ),
+    );
+  }
+
+  // Widget terpisah untuk mendesain Kartu List agar kode utama tetap rapi
+  Widget _buildExerciseCard(exercise) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 16), // Jarak antar kartu
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            // Ikon Kotak Placeholder di sebelah kiri
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.sports_gymnastics, color: Colors.blue[800], size: 36),
+            ),
+            const SizedBox(width: 16),
+            
+            // Teks Nama & Deskripsi
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    exercise.name,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    exercise.description,
+                    maxLines: 2, // Membatasi deskripsi maksimal 2 baris
+                    overflow: TextOverflow.ellipsis, // Menambahkan "..." jika kepanjangan
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
