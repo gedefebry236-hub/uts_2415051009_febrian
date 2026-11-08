@@ -5,7 +5,7 @@ Aplikasi mobile untuk mencatat rutinitas latihan kalistenik dan mengeksplorasi k
 ## Identitas Pembuat
 * **Nama:** Febrian
 * **NIM:** 2415051009
-* **Kelas:** (Isi kelasmu di sini)
+* **Kelas:** PTI 5C
 * **Program Studi:** Pendidikan Teknik Informatika
 * **Universitas:** Universitas Pendidikan Ganesha (UNDIKSHA)
 
