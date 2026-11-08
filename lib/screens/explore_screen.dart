@@ -13,10 +13,47 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    // Memanggil API saat halaman pertama kali dimuat
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ExerciseProvider>(context, listen: false).fetchExercises();
     });
+  }
+
+  // Dialog Identitas Pembuat
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.person, color: Colors.blue),
+            SizedBox(width: 8),
+            Text('Tentang Pembuat'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Aplikasi: CaliSplit UTS', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text('Nama: Febrian'),
+            Text('NIM: 2415051009'),
+            Text('Program Studi: Pendidikan Teknik Informatika'),
+            Text('Universitas: Universitas Pendidikan Ganesha (UNDIKSHA)'),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[800],
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -27,31 +64,34 @@ class _ExploreScreenState extends State<ExploreScreen> {
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          // Tombol Info di pojok kanan atas Explore Screen
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _showAboutDialog(context),
+            tooltip: 'Tentang Pembuat',
+          ),
+        ],
       ),
-      backgroundColor: Colors.grey[100], // Background terang agar Card lebih menonjol
+      backgroundColor: Colors.grey[100],
       body: Consumer<ExerciseProvider>(
         builder: (context, provider, child) {
-          // State 1: Loading
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // State 2: Error
           if (provider.error.isNotEmpty) {
             return Center(
               child: Text('Gagal memuat data: ${provider.error}', style: const TextStyle(color: Colors.red)),
             );
           }
 
-          // State 3: Data Kosong
           if (provider.exercises.isEmpty) {
             return const Center(child: Text('Tidak ada data gerakan.'));
           }
 
-          // State 4: Sukses (Responsive Layout)
           return LayoutBuilder(
             builder: (context, constraints) {
-              // Jika dibuka di Tablet/Web (layar lebar), gunakan GridView
               if (constraints.maxWidth > 600) {
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
@@ -66,9 +106,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     return _buildExerciseCard(provider.exercises[index]);
                   },
                 );
-              } 
-              // Jika di HP, gunakan ListView
-              else {
+              } else {
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: provider.exercises.length,
@@ -84,17 +122,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  // Widget terpisah untuk mendesain Kartu List agar kode utama tetap rapi
   Widget _buildExerciseCard(exercise) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 16), // Jarak antar kartu
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            // Ikon Kotak Placeholder di sebelah kiri
             Container(
               width: 70,
               height: 70,
@@ -105,8 +141,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: Icon(Icons.sports_gymnastics, color: Colors.blue[800], size: 36),
             ),
             const SizedBox(width: 16),
-            
-            // Teks Nama & Deskripsi
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,8 +153,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const SizedBox(height: 6),
                   Text(
                     exercise.description,
-                    maxLines: 2, // Membatasi deskripsi maksimal 2 baris
-                    overflow: TextOverflow.ellipsis, // Menambahkan "..." jika kepanjangan
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],

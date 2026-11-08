@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/exercise_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/my_routine_screen.dart';
 
 void main() async {
-  // Wajib ditambahkan agar aplikasi menunggu Supabase siap sebelum merender UI
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Menyambungkan aplikasi ke project Supabase milikmu
   await Supabase.initialize(
     url: 'https://gzjdiokuakwfygqdtssw.supabase.co',
     anonKey: 'sb_publishable_y6mufNDCUZ1_UkVIA44b1A_m0334Kf1',
@@ -53,7 +51,6 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
   
-  // Daftar screen untuk masing-masing tab navigasi
   final List<Widget> _screens = const [
     HomeScreen(),
     ExploreScreen(),

@@ -7,24 +7,25 @@ class ExerciseProvider with ChangeNotifier {
   
   List<ExerciseModel> _exercises = [];
   bool _isLoading = false;
-  String _errorMessage = '';
+  String _error = '';
 
   List<ExerciseModel> get exercises => _exercises;
   bool get isLoading => _isLoading;
-  String get errorMessage => _errorMessage;
+  String get error => _error; // Getter 'error' yang dicari oleh ExploreScreen
 
-  Future<void> loadExercises() async {
+  // Fungsi 'fetchExercises' yang dicari oleh ExploreScreen
+  Future<void> fetchExercises() async {
     _isLoading = true;
-    _errorMessage = '';
-    notifyListeners(); // Memberitahu UI untuk menampilkan loading
+    _error = '';
+    notifyListeners();
 
     try {
       _exercises = await _apiService.fetchExercises();
     } catch (e) {
-      _errorMessage = e.toString();
+      _error = e.toString();
     } finally {
       _isLoading = false;
-      notifyListeners(); // Memberitahu UI bahwa proses selesai
+      notifyListeners();
     }
   }
 }
