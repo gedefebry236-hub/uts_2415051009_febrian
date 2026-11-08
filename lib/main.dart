@@ -1,4 +1,3 @@
-// Final Submission UTS Pemrograman Mobile - Febrian
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +5,7 @@ import 'providers/exercise_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/my_routine_screen.dart';
+import 'screens/profile_screen.dart'; // Import Halaman Profil
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,10 +52,12 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
   
+  // Memasukkan ProfileScreen sebagai halaman ke-4
   final List<Widget> _screens = const [
     HomeScreen(),
     ExploreScreen(),
     MyRoutineScreen(),
+    ProfileScreen(), 
   ];
 
   @override
@@ -63,7 +65,10 @@ class _MainNavigatorState extends State<MainNavigator> {
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Penting ditambahkan jika menu lebih dari 3
         currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue[800],
+        unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {
             _selectedIndex = index;
@@ -73,6 +78,7 @@ class _MainNavigatorState extends State<MainNavigator> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explore'),
           BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Routine'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'), // Ikon menu baru
         ],
       ),
     );

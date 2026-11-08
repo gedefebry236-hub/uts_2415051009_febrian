@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'edit_screen.dart'; // Import halaman edit yang baru
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,64 +35,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _updateLog(int id, String name, int sets, int reps, double weight) async {
-    try {
-      await _supabase.from('split_logs').update({
-        'exercise_name': name,
-        'sets': sets,
-        'reps': reps,
-        'weight': weight,
-      }).eq('id', id);
-      
-      setState(() {}); 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data berhasil diperbarui ✏️'), backgroundColor: Colors.blue),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memperbarui: $e')));
-      }
-    }
-  }
-
-  void _showEditDialog(Map<String, dynamic> log) {
-    final nameController = TextEditingController(text: log['exercise_name']);
-    final setsController = TextEditingController(text: log['sets'].toString());
-    final repsController = TextEditingController(text: log['reps'].toString());
-    final weightController = TextEditingController(text: log['weight'].toString());
-
+  void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Rutinitas'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nama Gerakan')),
-              TextField(controller: setsController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Set')),
-              TextField(controller: repsController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Repetisi')),
-              TextField(controller: weightController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Beban (Kg)')),
-            ],
-          ),
+        title: const Row(
+          children: [
+            Icon(Icons.person, color: Colors.blue),
+            SizedBox(width: 8),
+            Text('Tentang Pembuat'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Aplikasi: CaliSplit UTS', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text('Nama: Febrian'),
+            Text('NIM: 2415051009'),
+            Text('Program Studi: Pendidikan Teknik Informatika'),
+            Text('Universitas: Universitas Pendidikan Ganesha (UNDIKSHA)'),
+          ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[800], foregroundColor: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-              _updateLog(
-                log['id'],
-                nameController.text,
-                int.tryParse(setsController.text) ?? 0,
-                int.tryParse(repsController.text) ?? 0,
-                double.tryParse(weightController.text) ?? 0.0,
-              );
-            },
-            child: const Text('Simpan Perubahan'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
           ),
         ],
       ),
@@ -105,6 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Beranda Kalistenik'),
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _showAboutDialog(context),
+            tooltip: 'Tentang Pembuat',
+          ),
+        ],
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _fetchLogs(),
@@ -117,11 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           final logs = snapshot.data ?? [];
-          final totalRoutines = logs.length; // Menghitung total data
+          final totalRoutines = logs.length;
 
           return Column(
             children: [
-              // KARTU RINGKASAN UI BARU
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20.0),
@@ -134,34 +111,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
+                    BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
                   ],
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      'Total Rutinitas Tersimpan',
-                      style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
+                    const Text('Total Rutinitas Tersimpan', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
-                    Text(
-                      '$totalRoutines',
-                      style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold),
-                    ),
+                    Text('$totalRoutines', style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
-
-              // LIST DATA RUTINITAS
               Expanded(
                 child: logs.isEmpty
-                    ? const Center(
-                        child: Text('Belum ada rutinitas. Yuk tambah di tab Routine!', style: TextStyle(fontSize: 16)),
-                      )
+                    ? const Center(child: Text('Belum ada rutinitas. Yuk tambah di tab Routine!', style: TextStyle(fontSize: 16)))
                     : ListView.builder(
                         itemCount: logs.length,
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -173,10 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             elevation: 2,
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.blue[100],
-                                child: Icon(Icons.fitness_center, color: Colors.blue[800]),
-                              ),
+                              leading: CircleAvatar(backgroundColor: Colors.blue[100], child: Icon(Icons.fitness_center, color: Colors.blue[800])),
                               title: Text(log['exercise_name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                               subtitle: Text('${log['sets']} Set x ${log['reps']} Reps\nBeban: ${log['weight']} Kg • Tanggal: $dateString'),
                               isThreeLine: true,
@@ -185,7 +145,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.edit, color: Colors.orange),
-                                    onPressed: () => _showEditDialog(log),
+                                    onPressed: () async {
+                                      // Pindah ke Edit Screen, tunggu kembalian nilainya
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => EditScreen(logData: log)),
+                                      );
+                                      // Jika update sukses (true), refresh halaman Home
+                                      if (result == true) {
+                                        setState(() {});
+                                      }
+                                    },
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.red),
